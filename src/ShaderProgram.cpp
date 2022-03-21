@@ -1,5 +1,7 @@
 #include "ShaderProgram.h"
+#include "Uniform.h"
 #include <iostream>
+
 
 void ShaderProgram::createProgram()
 {
@@ -39,3 +41,22 @@ void ShaderProgram::useProgram()
 	if(isLinked)
 		glUseProgram(shaderProgramID);
 }
+
+GLuint ShaderProgram::getShaderProgramID()
+{
+	return shaderProgramID;
+}
+
+Uniform& ShaderProgram::getUniform(std::string name)
+{
+	if(uniforms.count(name) == 0)
+	{
+		
+		uniforms[name] = Uniform(name, this);
+	}
+
+	return uniforms[name];
+}
+
+
+

@@ -1,3 +1,3 @@
-g++ -Wall -o bin/grid src/Main.cpp src/OpenGLWindow.cpp src/Shader.cpp src/ShaderProgram.cpp src/VertexBufferObject.cpp -Iinclude -Llib -lglfw3 -lopengl32 -lgdi32 -lglad
+g++.exe -Wall -o bin/grid.exe src/Main.cpp src/OpenGLWindow.cpp src/Shader.cpp src/ShaderProgram.cpp src/Uniform.cpp src/VertexBufferObject.cpp src/StaticGeometry.cpp src/SimpleWalkingCamera.cpp -Iinclude -Llib -lglfw3 -lopengl32 -lgdi32 -lglad -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
 
-https://www.mbsoftworks.sk/tutorials/opengl4/002-first-shader/
+https://stackoverflow.com/questions/13768515/how-to-do-static-linking-of-libwinpthread-1-dll-in-mingw
