@@ -22,7 +22,7 @@ GLuint mainVAOhandle;
 float width = 800;
 float height = 800;
 
-SimpleWalkingCamera camera(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, 19.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+SimpleWalkingCamera camera(glm::vec3(0.0f, 1.8f, 20.0f), glm::vec3(0.0f, 1.8f, 19.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 OpenGLWindow::OpenGLWindow()
 {
@@ -57,6 +57,7 @@ void OpenGLWindow::initializeScene()
 
 	shapesVBO.createVBO();
 	shapesVBO.bindVBO();
+	shapesVBO.addData(StaticGeometry::groundRectangleVertices);
 	shapesVBO.addData(StaticGeometry::cubeVertices);
 	shapesVBO.addData(StaticGeometry::pyramidVertices);
 	shapesVBO.uploadDataToGPU(GL_STATIC_DRAW);
@@ -66,6 +67,7 @@ void OpenGLWindow::initializeScene()
 
 	colorVBO.createVBO();
 	colorVBO.bindVBO();
+	colorVBO.addData(StaticGeometry::groundRectangleColors);
 	colorVBO.addData(StaticGeometry::cubeFaceColors, 6);
 	colorVBO.addData(StaticGeometry::pyramidFaceColors, 6);
 
@@ -87,50 +89,12 @@ void OpenGLWindow::renderScene()
 	//set projection matrix
 	recalculateProjectionMatrix();
 	shaderProgram.getUniform("projectionMatrix").set4x4Matrix(projectionMatrix);
-
-	// //set view matrix
-	// glm::mat4 viewMatrix
-	// (
-	// 	glm::lookAt
-	// 	( 
-	// 		glm::vec3(0.0f, 0.0f, 20.0f),
-	// 		glm::vec3(0.0f, 0.0f, 0.0f),
-	// 		glm::vec3(0.0f, 1.0f, 0.0f) 
-	// 	)
-	// );
-
 	shaderProgram.getUniform("viewMatrix").set4x4Matrix(camera.getViewMatrix());
-	
-	//set model matrix for cube
-	glm::mat4 modelMatrixCube = glm::mat4(1.0);
-	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(1.0f, 0.0f, 0.0f));
-	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(0.0f, 1.0f, 0.0f));
-	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(0.0f, 0.0f, 1.0f));
-	modelMatrixCube = glm::scale(modelMatrixCube, glm::vec3(5.0f, 5.0f, 5.0f));
 
-	//draw cube
-	shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixCube);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-	glm::vec3 pyramidTranslationVectors[] =
-	{
-		glm::vec3(-5.0f, 3.0f, 0.0f),
-		glm::vec3(5.0f, 3.0f, 0.0f),
-		glm::vec3(5.0f, -3.0f, 0.0f),
-		glm::vec3(-5.0f, -3.0f, 0.0f)
-	};
-
-	for(glm::vec3 pyramidTranslation : pyramidTranslationVectors)
-	{
-		glm::mat4 modelMatrixPyramid = glm::mat4(1.0);
-		modelMatrixPyramid = glm::translate(modelMatrixPyramid, pyramidTranslation);
-		modelMatrixPyramid = glm::rotate(modelMatrixPyramid, rotationAngleRad, glm::vec3(0.0f, 1.0f, 0.0f));
-		modelMatrixPyramid = glm::scale(modelMatrixPyramid, glm::vec3(3.0f, 3.0f, 3.0f));
-
-		shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixPyramid);
-		glDrawArrays(GL_TRIANGLES, 36, 12);
-	}
+	shaderProgram.getUniform("modelMatrix").set4x4Matrix(glm::mat4(1.0f));
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	renderTestHouseColumn(-25.0f, 10);
+	renderTestHouseColumn(25.0f, 10);
 }
 
 void OpenGLWindow::updateScene()
@@ -187,4 +151,64 @@ void OpenGLWindow::recalculateProjectionMatrix()
 bool OpenGLWindow::keyPressed(int keyCode) const
 {
 	return glfwGetKey(window, keyCode) == GLFW_PRESS;
+}
+
+void OpenGLWindow::renderTestHouseColumn(float xCoordinate, int noOfHouses)
+{
+	//this presumes a ground of 4 vertices is rendered
+	for(int i = 0; i < noOfHouses; i++)
+	{
+		//set position of house
+		float houseBottomSize = 10.0f;
+		float roofTopSize = 12.0f;
+
+		glm::mat4 modelMatrixHouse = glm::mat4(1.0f);
+		modelMatrixHouse = glm::translate(modelMatrixHouse, glm::vec3(xCoordinate, 0.0f, -125.0f + i * 25.0f));
+
+		//render bottom of house
+		glm::mat4 modelMatrixBottom = glm::translate(modelMatrixHouse, glm::vec3(0.0f, houseBottomSize / 2.0f, 0.0f));
+		modelMatrixBottom = glm::scale(modelMatrixBottom, glm::vec3(houseBottomSize, houseBottomSize, houseBottomSize));
+		shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixBottom);
+		glDrawArrays(GL_TRIANGLES, 4, 40);
+
+		//render top of house
+		float translateTopY = houseBottomSize + roofTopSize / 2.0f - 1.0f;
+		glm::mat4 modelMatrixTop = glm::translate(modelMatrixHouse, glm::vec3(0.0f, translateTopY, 0.0f));
+		modelMatrixTop = glm::scale(modelMatrixTop, glm::vec3(roofTopSize, roofTopSize, roofTopSize));
+		shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixTop);
+		glDrawArrays(GL_TRIANGLES, 40,12);
+	}
+}
+
+void OpenGLWindow::renderSpinningTest(glm::vec3 position)
+{
+	//set model matrix for cube
+	glm::mat4 modelMatrixCube = glm::mat4(1.0);
+	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(1.0f, 0.0f, 0.0f));
+	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(0.0f, 1.0f, 0.0f));
+	modelMatrixCube = glm::rotate(modelMatrixCube, rotationAngleRad, glm::vec3(0.0f, 0.0f, 1.0f));
+	modelMatrixCube = glm::scale(modelMatrixCube, glm::vec3(5.0f, 5.0f, 5.0f));
+
+	//draw cube
+	shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixCube);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glm::vec3 pyramidTranslationVectors[] =
+	{
+		glm::vec3(-5.0f, 3.0f, 0.0f),
+		glm::vec3(5.0f, 3.0f, 0.0f),
+		glm::vec3(5.0f, -3.0f, 0.0f),
+		glm::vec3(-5.0f, -3.0f, 0.0f)
+	};
+
+	for(glm::vec3 pyramidTranslation : pyramidTranslationVectors)
+	{
+		glm::mat4 modelMatrixPyramid = glm::mat4(1.0);
+		modelMatrixPyramid = glm::translate(modelMatrixPyramid, pyramidTranslation);
+		modelMatrixPyramid = glm::rotate(modelMatrixPyramid, rotationAngleRad, glm::vec3(0.0f, 1.0f, 0.0f));
+		modelMatrixPyramid = glm::scale(modelMatrixPyramid, glm::vec3(3.0f, 3.0f, 3.0f));
+
+		shaderProgram.getUniform("modelMatrix").set4x4Matrix(modelMatrixPyramid);
+		glDrawArrays(GL_TRIANGLES, 36, 12);
+	}
 }

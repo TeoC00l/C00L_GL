@@ -31,4 +31,7 @@ private:
 	void updateScene();
 
 	void recalculateProjectionMatrix();
+
+	void renderTestHouseColumn(float xCoordinate, int noOfHouses);
+	void renderSpinningTest(glm::vec3 position);
 };
